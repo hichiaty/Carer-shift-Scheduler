@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Responsive Calendar with a table</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/datepicker.min.css')}}">
+
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #333;">
+        <a class="navbar-brand" href="#">
+            <img src="{{ img }}" width="30" height="30" class="d-inline-block align-top" alt="" style="border-radius: 50%;"> </img>{{current_user.name}}
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+              </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Unavailability
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <center>
+                            Day Unavailability
+                            <div class="datepicker-here" id="cal1" data-language='en' data-multiple-dates="30" data-multiple-dates-separator=", " data-position='top left'></div>
+                        </center>
+                        <div class="dropdown-divider"></div>
+                        <center>
+                            Night Unavailability
+                            <div class="datepicker-here" id="cal2" data-language='en' data-multiple-dates="30" data-multiple-dates-separator=", " data-position='top left'></div>
+                            </br>
+                            <button type="button" id='confirm-unav' class="btn btn-primary">Confirm Unavailabilities</button>
+                        </center>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                        {% if swaps|length > 0 %}
+                         {% set swap_number = [] %}
+                         {% for swap in swaps %}
+                         {% if swap.decision_maker_id == current_user.id or swap.requester_id == current_user.id%}
+                         {% if swap.fullfilment_status == false %}
+                         {{ swap_number.append( swap )|default("", True) }}
+                         {% endif %}{% endif %}
+                         {% endfor %}
+                        {% if swap_number|length >0 %}
+                        <span class="badge badge-pill badge-primary" style="float:left; margin-bottom:-10px;">{{swap_number|count}}</span>
+                        {% endif %}{% endif %}
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown2" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Swap Requests
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown2">
+                        {% if swaps|length > 0 %}
+                                    {% for swap in swaps %}
+                                    {% if swap.decision_maker_id == current_user.id and swap.rejected == false and swap.fullfilment_status == false %}
+                                    <div>
+                                    <div class="dropdown-divider"></div>
+                                    <div class="card-body" id="{{swap.id}}">
+                                        <h5 class="card-title">Swap #{{swap.id}}</h5>
+                                      <p class="card-text">The person on shift {{shiftids[swap.shift_id1 -1].shift_date}}  {% if shiftids[swap.shift_id1 -1].shift_type == 0 %} Day {% else %} Night {% endif %} would like to swap with you for shift {{shiftids[swap.shift_id2 -1].shift_date}}  {% if shiftids[swap.shift_id2 -1].shift_type == 0 %} Day {% else %} Night {% endif %}</p>
+                                      <a class="btn btn-success acceptswap" href="#" id="{{swap.id}}" data-swap1="{{swap.shift_id1}}" data-swap2="{{swap.shift_id2}}" style="margin: 1rem;">Accept</a>
+                                      <a class="btn btn-danger rejectswap" href="#" id="{{swap.id}}"  data-swap1="{{swap.shift_id1}}" data-swap2="{{swap.shift_id2}}" style="margin: 1rem;">Reject</a>
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                  </div>
+                                  {% endif %}
+
+                                  {% if swap.requester_id == current_user.id and swap.rejected == false and swap.fullfilment_status == false %}
+                                  <div>
+                                        <div class="dropdown-divider"></div>
+                                        <div class="card-body">
+                                                <h5 class="card-title">Swap #{{swap.id}}</h5>
+                                          <p class="card-text">Awaiting response for a swap for shift {{shiftids[swap.shift_id1 -1].shift_date}}  {% if shiftids[swap.shift_id1 -1].shift_type == 0 %} Day {% else %} Night {% endif %} with {{shiftids[swap.shift_id2 -1].shift_date}} {% if shiftids[swap.shift_id2 -1].shift_type == 0 %} Day {% else %} Night {% endif %}</p>
+                                        </div>
+                                        <div class="dropdown-divider"></div>
+                                      </div>
+                                  {% endif %}
+
+                                  {% if swap.requester_id == current_user.id and swap.fullfilment_status == true and swap.rejected == false %}
+                                  <div>
+                                        <div class="dropdown-divider"></div>
+                                        <div class="card-body">
+                                                <h5 class="card-title">Swap #{{swap.id}}</h5>
+                                          <p class="card-text">Your swap request has been accepted! Please see your new shifts in the shifts calendar.</p>
+                                        </div>
+                                        <div class="dropdown-divider"></div>
+                                      </div>
+                                  {% endif %}
+                                  {% if swap.requester_id == current_user.id and swap.fullfilment_status == true and swap.rejected == true %}
+                                  <div>
+                                        <div class="dropdown-divider"></div>
+                                        <div class="card-body">
+                                                <h5 class="card-title">Swap #{{swap.id}}</h5>
+                                          <p class="card-text">Your swap request has been rejected. </p>
+                                        </div>
+                                        <div class="dropdown-divider"></div>
+                                      </div>
+                                  {% endif %}
+                                  {% if swap.decision_maker_id == current_user.id and swap.rejected == true %}
+                                  <div>
+                                  <div class="dropdown-divider"></div>
+                                  <div class="card-body">
+                                        <h5 class="card-title">Swap #{{swap.id}}</h5>
+                                    <p class="card-text">You have rejected this swap</p>
+                                  </div>
+                                  <div class="dropdown-divider"></div>
+                                </div>
+                                {% endif %}
+                                {% if swap.decision_maker_id == current_user.id and swap.rejected == false and swap.fullfilment_status == true %}
+                                <div>
+                                <div class="dropdown-divider"></div>
+                                <div class="card-body">
+                                        <h5 class="card-title">Swap #{{swap.id}}</h5>
+                                  <p class="card-text">You have accepted this swap, Please see your new shifts in the shifts calendar.</p>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                              </div>
+                              {% endif %}
+                                  {% endfor %}
+                        {% else %}
+                                  <div class="dropdown-divider"></div>
+                                  <div class="card-body">You have no swap requests!</div>
+                                <div class="dropdown-divider"></div>
+                                {% endif %}
+
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/logout">Logout</a>
+                </li>
+            </ul>
+
+        </div>
+    </nav>
+    <table id="calendar">
+        <caption>Hichi's Rota September 2019</caption>
+        <tr class="weekdays">
+            <th scope="col">Sunday</th>
+            <th scope="col">Monday</th>
+            <th scope="col">Tuesday</th>
+            <th scope="col">Wednesday</th>
+            <th scope="col">Thursday</th>
+            <th scope="col">Friday</th>
+            <th scope="col">Saturday</th>
+        </tr>
+        <tr id='theting'>
+            {% for day in days %}
+
+
+            <td class="day">
+                <div class="date"><span class="day-name">{{daynames[loop.index0]}}</span> <span class="day">{{loop.index}}<span class="ordinal">{% if loop.index == 1 %}st{% elif loop.index == 2 %}nd{% elif loop.index == 3 %}rd{% elif loop.index == 21 %}st{% elif loop.index == 22 %}nd{% elif loop.index == 23 %}rd{% else %}th{% endif %}</span></span>
+                </div>
+                {% for shift in day %}
+                <button id="{{shift.id}}" data-toggle="modal" data-target="#Add-remove-shift" data-shift-id="{{shift.id}}" class="event {% if shift.covered == 0 %} available {% elif shift.covered == 1 and shift.covered_by == current_user.id %} covered-you {% elif shift.covered == 1 and shift.covered_by != current_user.id %} available-swap {% else %} unavailable {% endif %} free ticketed ">
+                    <div class="event-desc">
+                        {% if shift.shift_type == 0 %} Day Shift {% else %} Night Shift {% endif %}
+                    </div>
+                    <div class="event-time">
+                        {% if shift.shift_type == 0 %} 9:00am - 9:00pm {% else %} 9:00pm - 9:00am {% endif %}
+                    </div>
+                </button> {% endfor %} {% endfor %}
+			</td>
+
+
+
+
+
+
+
+
+
+
+
+                <td class="day other-month after-month">
+                    <div class="date"><span class="day-name">Tuesday</span> <span class="day">1<span class="ordinal">st</span></span>
+                    </div>
+                </td>
+                <td class="day other-month after-month">
+                    <div class="date"><span class="day-name">Wednesday</span> <span class="day">2<span class="ordinal">nd</span></span>
+                    </div>
+
+                </td>
+                <td class="day other-month after-month">
+                    <div class="date"><span class="day-name">Thursday</span> <span class="day">3<span class="ordinal">rd</span></span>
+                    </div>
+                </td>
+                <td class="day other-month after-month">
+                    <div class="date"><span class="day-name">Friday</span> <span class="day">4<span class="ordinal">th</span></span>
+                    </div>
+                </td>
+                <td class="day other-month after-month">
+                    <div class="date"><span class="day-name">Saturday</span> <span class="day">5<span class="ordinal">th</span></span>
+                    </div>
+                </td>
+        </tr>
+
+    </table>
+
+    <!-- Modal uncovered -->
+    <div class="modal fade" id="Add-remove-shift" tabindex="-1" role="dialog" aria-labelledby="Add-remove-shift" aria-hidden="true">
+        <div id="my_modal" class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="Add-remove-shift-Label">Confirm</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+                </div>
+                <div id="modtext" class="modal-body">
+                    Are you sure you want to add/remove yourself from this shift?
+                </div>
+                <div class="modal-footer" id='modfoot'>
+                    <button type="button" id='lolno' class="btn btn-secondary" data-dismiss="modal">No</button>
+                    <button type="button" id='confirm-change' class="btn btn-primary">Put me on</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+<!-- 
+    <div class="modal fade" id="SwapModal" tabindex="-1" role="dialog" aria-labelledby="SwapModal" aria-hidden="true">
+            <div id="my_SwapModal" class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="SwapModal-Label">Create a swap request</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                    </div>
+                    <div id="modtext2" class="modal-body">
+                                        <form>
+                                    <div class="form-group">
+                                      <label for="reasoninput">Please give a reason for your swap request:</label>
+                                      <input type="text" id="reasoninput" required class="form-control" placeholder="I forgot my underwear in the freezer and don't have any left...">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                                  </form>        
+                                </div>
+                </div>
+            </div>
+        </div> -->
+
+
+    <!-- partial -->
+    <!-- <script src="./script.js"></script> -->
+    <!-- <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script> -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js" crossorigin="anonymous"></script> -->
+    <script src="{{url_for('static', filename='js/datepicker.min.js')}}"></script>
+    <script src="{{url_for('static', filename='js/datepicker.en.js')}}"></script>
+
+    <script>
+        $('#Add-remove-shift').on('show.bs.modal', function(e) {
+            //get data-id attribute of the clicked element
+            shiftId = $(e.relatedTarget).data('shift-id');
+            if ($("#" + shiftId).is(".covered-you")) {
+                $('#modfoot').show();
+                $('#confirm-change').show();
+                $('#lolno').show();
+                $('#modtext').text("Are you sure you want to remove yourself from this shift?");
+                $('#confirm-change').text("Take me off!");
+
+            } else if ($("#" + shiftId).is(".unavailable")) {
+                $('#modfoot').show();
+                $('#modtext').text("You can't pick up this shift!");
+                $('#confirm-change').hide();
+                $('#lolno').hide();
+
+            } else if ($("#" + shiftId).is(".available-swap")) {
+                $('#modfoot').hide();
+                $('#confirm-change').hide();
+                $('#lolno').hide();
+                $('#modtext').html('<form action="/swapshift" method="post">    <div class="form-group">        <label for="reasoninput">Please give a reason for your swap request:</label>        <input type="text" id="reasoninput" name="reason" required class="form-control" placeholder="I forgot my underwear in the freezer and don\'t have any left...">        <input type="hidden" name="id2" value="'+shiftId+'"> </div>    <p> Please Select the shift you would like to give up:</p> {% for day in days %} {% for shift in day %} {% if shift.covered_by == current_user.id %}    <div class="custom-control custom-radio">        <input type="radio" id="check{{shift.id}}" name="id1" value="{{shift.id}}" class="custom-control-input">        <label class="custom-control-label" for="check{{shift.id}}">{{shift.shift_date}} {% if shift.shift_type == 0 %} Day {% else %} Night {% endif %}</label>    </div> {% endif %} {% endfor %} {% endfor %}</br>    <button type="submit" class="btn btn-primary">Submit Request</button></form>');
+
+            } else {
+                $('#modfoot').show();
+                $('#confirm-change').show();
+                $('#lolno').show();
+                $('#modtext').text("Are you sure you want to add yourself to this shift?");
+                $('#confirm-change').text("Put me on!");
+            }
+
+
+        });
+    </script>
+    <script>
+        $("#confirm-change").click(function() {
+            window.location.href = "/updateshift/" + shiftId;
+        });
+    </script>
+    <script>
+        var ids = $('#theting .covered-you').map(function() {
+            return $(this).attr('id');
+        }).get();
+
+        // var all = $("[data-shift-id]").map(function() {
+        //     return $(this).attr('id');
+        // }).get();
+        // console.log(all);
+        for (indx in ids) {
+
+            if (Number(ids[indx]) % 3 == 0) {
+                $("[data-shift-id=" + (Number(ids[indx]) + 1) + "]").attr("class", "event unavailable")
+                $("[data-shift-id=" + (Number(ids[indx]) - 1) + "]").attr("class", "event unavailable")
+                $("[data-shift-id=" + (Number(ids[indx]) - 2) + "]").attr("class", "event unavailable")
+
+            } else if ($("[data-shift-id=" + Number(ids[indx]) + "]").children(".event-desc").text().includes("Day")) {
+                $("[data-shift-id=" + (Number(ids[indx]) - 1) + "]").attr("class", "event unavailable")
+                $("[data-shift-id=" + (Number(ids[indx]) - 2) + "]").attr("class", "event unavailable")
+                $("[data-shift-id=" + (Number(ids[indx]) + 1) + "]").attr("class", "event unavailable")
+                $("[data-shift-id=" + (Number(ids[indx]) + 2) + "]").attr("class", "event unavailable")
+            } else {
+                $("[data-shift-id=" + (Number(ids[indx]) - 1) + "]").attr("class", "event unavailable")
+                $("[data-shift-id=" + (Number(ids[indx]) + 1) + "]").attr("class", "event unavailable")
+                $("[data-shift-id=" + (Number(ids[indx]) + 2) + "]").attr("class", "event unavailable")
+
+            }
+
+
+
+
+        };
+        $('.dropdown-menu .datepicker-here').click(function(e) {
+            e.stopPropagation();
+        });
+    </script>
+    <script>
+        $('#confirm-unav').click(function(e) {
+            var datesDay = [];
+            var datesNight = [];
+            for (indx in $('#cal1').data('datepicker').selectedDates) {
+
+                datesDay.push($('#cal1').data('datepicker').selectedDates[indx].getDate())
+
+
+            };
+
+            for (indx in $('#cal2').data('datepicker').selectedDates) {
+
+                $('#cal2').data('datepicker').selectedDates[indx].getDate()
+                datesNight.push($('#cal2').data('datepicker').selectedDates[indx].getDate())
+
+            };
+            var datesDay2 = JSON.stringify(datesDay);
+            var datesNight2 = JSON.stringify(datesNight);
+            $.post({
+                data: {
+                    dateday: datesDay2,
+                    datenight: datesNight2
+                },
+                type: 'POST',
+                url: '/updateavailability',
+                success: function() {
+                    location.reload();
+                }
+            });
+        });
+        // $('#cal1').datepicker();
+        // $('#cal2').datepicker();
+
+        // console.log($('#cal1').data('datepicker').selectedDates.getDate());
+    </script>
+    <script>
+        {% for day in unavdays %}
+        $('#cal1').datepicker().data('datepicker').selectDate(new Date(2019, 8, {{day.which_day}}));
+        {% endfor %}
+        {% for night in unavnights %}
+        $('#cal2').datepicker().data('datepicker').selectDate(new Date(2019, 8, {{night.which_day}}));
+        {% endfor %}
+    </script>
+
+	<script>
+	{% for day in unavdays %}
+	{% for shift in days[day.which_day] %}
+	{% if shift.shift_type == 0 %}
+	
+    $("#{{shift.id -3}}").attr("class", "event unavailable");
+	{% endif %}{% endfor %}{% endfor %}
+	
+	{% for night in unavnights %}
+	{% for shift in days[night.which_day] %}
+	{% if shift.shift_type == 1 %}
+	
+    $("#{{shift.id -3}}").attr("class", "event unavailable");
+	{% endif %}{% endfor %}{% endfor %}
+	
+	</script>
+	
+	<script>
+	var cal1 = $('#cal1').datepicker().data('datepicker');
+	var cal2 = $('#cal2').datepicker().data('datepicker');
+	
+	cal1.date = new Date(2019,8,1);
+	cal2.date = new Date(2019,8,1);
+    </script>
+    
+    <script>
+$(document).on("click", ".acceptswap", function () {
+        var swapid1 = $(this).data("swap1")
+        var swapid2 = $(this).data("swap2")
+
+    $.post({
+                data: {
+                    id1: swapid1,
+                    id2: swapid2,
+                    accept: true
+                },
+                type: 'POST',
+                url: '/swapshift',
+                success: function() {
+                    location.reload();
+                }
+            });
+        });
+
+$(document).on("click", ".rejectswap", function () {
+// vary id with swap number cause only first works
+var swapid1 = $(this).data("swap1")
+var swapid2 = $(this).data("swap2")
+
+$.post({
+        data: {
+            id1: swapid1,
+            id2: swapid2,
+            accept: false
+        },
+        type: 'POST',
+        url: '/swapshift',
+        success: function() {
+            location.reload();
+        }
+    });
+});
+    </script>
+</body>
+
+</html>
+
+    
