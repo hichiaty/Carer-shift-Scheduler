@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, url_for, request, redirect, Response, abort, session, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
@@ -9,6 +8,8 @@ from app.models import *
 from app import app, login_manager, mail
 import calendar
 import datetime
+from sqlalchemy import extract
+
 
 bidding = False
 daynames = ['Sunday','Monday','Tuesday','Wednesday', 'Thursday', 'Friday', 'Saturday']*5
@@ -72,7 +73,7 @@ def rota():
         #ADD SHIFT?
         pass
     else:
-        shifts = Shift.query.order_by(Shift.shift_date).all()
+        shifts = Shift.query.order_by(Shift.shift_date).filter(extract('month', Shift.shift_date) == now.month).all()
         # print(shifts)
         days = [shifts[3*i:3*(i+1)] for i in range(int(len(shifts)/3))]
         # print(days) 
@@ -80,7 +81,7 @@ def rota():
         unavnights = Unavailabilities.query.filter_by(person_unavailable=current_user.id, day_or_night=1 ).all()
         img = url_for('static', filename='staffimgs/{}.png'.format(Team.query.get_or_404(current_user.id).photo))
         swaps = Swaps.query.filter((Swaps.requester_id==current_user.id) | (Swaps.decision_maker_id==current_user.id)).all()
-        shiftids = shifts = Shift.query.order_by(Shift.id).all()
+        shiftids = shifts = Shift.query.order_by(Shift.id).filter(extract('month', Shift.shift_date) == now.month).all()
         return render_template('rota.html', now=now, rota_name=rota_name, shiftids=shiftids, days=days, daynames=daynames, unavnights=unavnights, unavdays=unavdays, img=img, swaps=swaps)
 
 
@@ -106,7 +107,7 @@ def adminrota():
                 print('There was an issue updating your shift')
                 return redirect('/admin-rota')
         else: #get
-            shifts = Shift.query.order_by(Shift.shift_date).all()
+            shifts = Shift.query.order_by(Shift.shift_date).filter(extract('month', Shift.shift_date) == now.month).all()
             for shift in shifts:
                 if shift.covered !=0:
                     shift.covered_by_name = Team.query.filter_by(id=shift.covered_by).first().name
@@ -269,11 +270,11 @@ def bidding_func():
                 print('There was an issue updating your shift')
                 return redirect('/bidding')
     else:
-        shifts = Shift.query.order_by(Shift.shift_date).all()
+        shifts = Shift.query.order_by(Shift.shift_date).filter(extract('month', Shift.shift_date) == now.month).all()
         days = [shifts[3*i:3*(i+1)] for i in range(int(len(shifts)/3))]    
         unavdays = Unavailabilities.query.filter_by(person_unavailable=current_user.id, day_or_night=0 ).all()
         unavnights = Unavailabilities.query.filter_by(person_unavailable=current_user.id, day_or_night=1 ).all()
         img = url_for('static', filename='staffimgs/{}.png'.format(Team.query.get_or_404(current_user.id).photo))
-        shiftids = shifts = Shift.query.order_by(Shift.id).all()
+        shiftids = shifts = Shift.query.order_by(Shift.id).filter(extract('month', Shift.shift_date) == now.month).all()
         bids = Bids.query.filter_by(bidder_id=current_user.id).all()
         return render_template('biddingrota.html', now=now, rota_name=rota_name, shiftids=shiftids, days=days, daynames=daynames, unavnights=unavnights, unavdays=unavdays, img=img, bids=bids)
