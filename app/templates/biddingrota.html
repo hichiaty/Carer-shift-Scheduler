@@ -42,97 +42,6 @@
                         </center>
                     </div>
                 </li>
-                <li class="nav-item dropdown">
-                        {% if swaps|length > 0 %}
-                         {% set swap_number = [] %}
-                         {% for swap in swaps %}
-                         {% if swap.decision_maker_id == current_user.id or swap.requester_id == current_user.id%}
-                         {% if swap.fullfilment_status == false %}
-                         {{ swap_number.append( swap )|default("", True) }}
-                         {% endif %}{% endif %}
-                         {% endfor %}
-                        {% if swap_number|length >0 %}
-                        <span class="badge badge-pill badge-primary" style="float:left; margin-bottom:-10px;">{{swap_number|count}}</span>
-                        {% endif %}{% endif %}
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown2" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      Swap Requests
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown2">
-                        {% if swaps|length > 0 %}
-                                    {% for swap in swaps %}
-                                    {% if swap.decision_maker_id == current_user.id and swap.rejected == false and swap.fullfilment_status == false %}
-                                    <div>
-                                    <div class="dropdown-divider"></div>
-                                    <div class="card-body" id="{{swap.id}}">
-                                        <h5 class="card-title">Swap #{{swap.id}}</h5>
-                                      <p class="card-text">The person on shift {{shiftids[swap.shift_id1 -1].shift_date}}  {% if shiftids[swap.shift_id1 -1].shift_type == 0 %} Day {% else %} Night {% endif %} would like to swap with you for shift {{shiftids[swap.shift_id2 -1].shift_date}}  {% if shiftids[swap.shift_id2 -1].shift_type == 0 %} Day {% else %} Night {% endif %}</p>
-                                      <a class="btn btn-success acceptswap" href="#" id="{{swap.id}}" data-swap1="{{swap.shift_id1}}" data-swap2="{{swap.shift_id2}}" style="margin: 1rem;">Accept</a>
-                                      <a class="btn btn-danger rejectswap" href="#" id="{{swap.id}}"  data-swap1="{{swap.shift_id1}}" data-swap2="{{swap.shift_id2}}" style="margin: 1rem;">Reject</a>
-                                    </div>
-                                    <div class="dropdown-divider"></div>
-                                  </div>
-                                  {% endif %}
-
-                                  {% if swap.requester_id == current_user.id and swap.rejected == false and swap.fullfilment_status == false %}
-                                  <div>
-                                        <div class="dropdown-divider"></div>
-                                        <div class="card-body">
-                                                <h5 class="card-title">Swap #{{swap.id}}</h5>
-                                          <p class="card-text">Awaiting response for a swap for shift {{shiftids[swap.shift_id1 -1].shift_date}}  {% if shiftids[swap.shift_id1 -1].shift_type == 0 %} Day {% else %} Night {% endif %} with {{shiftids[swap.shift_id2 -1].shift_date}} {% if shiftids[swap.shift_id2 -1].shift_type == 0 %} Day {% else %} Night {% endif %}</p>
-                                        </div>
-                                        <div class="dropdown-divider"></div>
-                                      </div>
-                                  {% endif %}
-
-                                  {% if swap.requester_id == current_user.id and swap.fullfilment_status == true and swap.rejected == false %}
-                                  <div>
-                                        <div class="dropdown-divider"></div>
-                                        <div class="card-body">
-                                                <h5 class="card-title">Swap #{{swap.id}}</h5>
-                                          <p class="card-text">Your swap request has been accepted! Please see your new shifts in the shifts calendar.</p>
-                                        </div>
-                                        <div class="dropdown-divider"></div>
-                                      </div>
-                                  {% endif %}
-                                  {% if swap.requester_id == current_user.id and swap.fullfilment_status == true and swap.rejected == true %}
-                                  <div>
-                                        <div class="dropdown-divider"></div>
-                                        <div class="card-body">
-                                                <h5 class="card-title">Swap #{{swap.id}}</h5>
-                                          <p class="card-text">Your swap request has been rejected. </p>
-                                        </div>
-                                        <div class="dropdown-divider"></div>
-                                      </div>
-                                  {% endif %}
-                                  {% if swap.decision_maker_id == current_user.id and swap.rejected == true %}
-                                  <div>
-                                  <div class="dropdown-divider"></div>
-                                  <div class="card-body">
-                                        <h5 class="card-title">Swap #{{swap.id}}</h5>
-                                    <p class="card-text">You have rejected this swap</p>
-                                  </div>
-                                  <div class="dropdown-divider"></div>
-                                </div>
-                                {% endif %}
-                                {% if swap.decision_maker_id == current_user.id and swap.rejected == false and swap.fullfilment_status == true %}
-                                <div>
-                                <div class="dropdown-divider"></div>
-                                <div class="card-body">
-                                        <h5 class="card-title">Swap #{{swap.id}}</h5>
-                                  <p class="card-text">You have accepted this swap, Please see your new shifts in the shifts calendar.</p>
-                                </div>
-                                <div class="dropdown-divider"></div>
-                              </div>
-                              {% endif %}
-                                  {% endfor %}
-                        {% else %}
-                                  <div class="dropdown-divider"></div>
-                                  <div class="card-body">You have no swap requests!</div>
-                                <div class="dropdown-divider"></div>
-                                {% endif %}
-
-                    </div>
-                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/logout">Logout</a>
                 </li>
@@ -141,7 +50,7 @@
         </div>
     </nav>
     <table id="calendar">
-        <caption>Hichi's Rota September 2019</caption>
+        <caption>Hichi's Rota {{rota_name}} - Bidding period</caption>
         <tr class="weekdays">
             <th scope="col">Sunday</th>
             <th scope="col">Monday</th>
@@ -159,7 +68,7 @@
                 <div class="date"><span class="day-name">{{daynames[loop.index0]}}</span> <span class="day">{{loop.index}}<span class="ordinal">{% if loop.index == 1 %}st{% elif loop.index == 2 %}nd{% elif loop.index == 3 %}rd{% elif loop.index == 21 %}st{% elif loop.index == 22 %}nd{% elif loop.index == 23 %}rd{% else %}th{% endif %}</span></span>
                 </div>
                 {% for shift in day %}
-                <button id="{{shift.id}}" data-toggle="modal" data-target="#Add-remove-shift" data-shift-id="{{shift.id}}" class="event {% if shift.covered == 0 %} available {% elif shift.covered == 1 and shift.covered_by == current_user.id %} covered-you {% elif shift.covered == 1 and shift.covered_by != current_user.id %} available-swap {% else %} unavailable {% endif %} free ticketed ">
+                <button id="{{shift.id}}" data-toggle="modal" data-target="#Add-remove-shift" data-shift-id="{{shift.id}}" class="event available {% for bid in bids %} {% if shift.id == bid.shift_id %} covered-you {% endif %} {% endfor %}">
                     <div class="event-desc">
                         {% if shift.shift_type == 0 %} Day Shift {% else %} Night Shift {% endif %}
                     </div>
@@ -168,14 +77,6 @@
                     </div>
                 </button> {% endfor %} {% endfor %}
 			</td>
-
-
-
-
-
-
-
-
 
 
 
@@ -271,8 +172,8 @@
                 $('#modfoot').show();
                 $('#confirm-change').show();
                 $('#lolno').show();
-                $('#modtext').text("Are you sure you want to remove yourself from this shift?");
-                $('#confirm-change').text("Take me off!");
+                $('#modtext').text("Are you sure you want to remove your bid to do this shift?");
+                $('#confirm-change').text("Unbid!");
 
             } else if ($("#" + shiftId).is(".unavailable")) {
                 $('#modfoot').show();
@@ -290,8 +191,8 @@
                 $('#modfoot').show();
                 $('#confirm-change').show();
                 $('#lolno').show();
-                $('#modtext').text("Are you sure you want to add yourself to this shift?");
-                $('#confirm-change').text("Put me on!");
+                $('#modtext').text("Are you sure you want to bid to do this shift?");
+                $('#confirm-change').text("Bid!");
             }
 
 
@@ -299,41 +200,51 @@
     </script>
     <script>
         $("#confirm-change").click(function() {
-            window.location.href = "/updateshift/" + shiftId;
-        });
+            
+            $.post({
+                data: {
+                    shiftid: shiftId
+                },
+                type: 'POST',
+                url: '/bidding',
+                success: function() {
+                    location.reload();
+                }
+            });
+
+
+
+        }); //post request here
     </script>
     <script>
-        var ids = $('#theting .covered-you').map(function() {
-            return $(this).attr('id');
-        }).get();
-
-        // var all = $("[data-shift-id]").map(function() {
+        // var ids = $('#theting .covered-you').map(function() {
         //     return $(this).attr('id');
         // }).get();
-        // console.log(all);
-        for (indx in ids) {
 
-            if (Number(ids[indx]) % 3 == 0) {
-                $("[data-shift-id=" + (Number(ids[indx]) + 1) + "]").attr("class", "event unavailable")
-                $("[data-shift-id=" + (Number(ids[indx]) - 1) + "]").attr("class", "event unavailable")
-                $("[data-shift-id=" + (Number(ids[indx]) - 2) + "]").attr("class", "event unavailable")
+        // // var all = $("[data-shift-id]").map(function() {
+        // //     return $(this).attr('id');
+        // // }).get();
+        // // console.log(all);
+        // for (indx in ids) {
 
-            } else if ($("[data-shift-id=" + Number(ids[indx]) + "]").children(".event-desc").text().includes("Day")) {
-                $("[data-shift-id=" + (Number(ids[indx]) - 1) + "]").attr("class", "event unavailable")
-                $("[data-shift-id=" + (Number(ids[indx]) - 2) + "]").attr("class", "event unavailable")
-                $("[data-shift-id=" + (Number(ids[indx]) + 1) + "]").attr("class", "event unavailable")
-                $("[data-shift-id=" + (Number(ids[indx]) + 2) + "]").attr("class", "event unavailable")
-            } else {
-                $("[data-shift-id=" + (Number(ids[indx]) - 1) + "]").attr("class", "event unavailable")
-                $("[data-shift-id=" + (Number(ids[indx]) + 1) + "]").attr("class", "event unavailable")
-                $("[data-shift-id=" + (Number(ids[indx]) + 2) + "]").attr("class", "event unavailable")
+        //     if (Number(ids[indx]) % 3 == 0) {
+        //         $("[data-shift-id=" + (Number(ids[indx]) + 1) + "]").attr("class", "event unavailable")
+        //         $("[data-shift-id=" + (Number(ids[indx]) - 1) + "]").attr("class", "event unavailable")
+        //         $("[data-shift-id=" + (Number(ids[indx]) - 2) + "]").attr("class", "event unavailable")
 
-            }
+        //     } else if ($("[data-shift-id=" + Number(ids[indx]) + "]").children(".event-desc").text().includes("Day")) {
+        //         $("[data-shift-id=" + (Number(ids[indx]) - 1) + "]").attr("class", "event unavailable")
+        //         $("[data-shift-id=" + (Number(ids[indx]) - 2) + "]").attr("class", "event unavailable")
+        //         $("[data-shift-id=" + (Number(ids[indx]) + 1) + "]").attr("class", "event unavailable")
+        //         $("[data-shift-id=" + (Number(ids[indx]) + 2) + "]").attr("class", "event unavailable")
+        //     } else {
+        //         $("[data-shift-id=" + (Number(ids[indx]) - 1) + "]").attr("class", "event unavailable")
+        //         $("[data-shift-id=" + (Number(ids[indx]) + 1) + "]").attr("class", "event unavailable")
+        //         $("[data-shift-id=" + (Number(ids[indx]) + 2) + "]").attr("class", "event unavailable")
 
+        //     }
 
-
-
-        };
+        // };
         $('.dropdown-menu .datepicker-here').click(function(e) {
             e.stopPropagation();
         });
@@ -376,10 +287,10 @@
     </script>
     <script>
         {% for day in unavdays %}
-        $('#cal1').datepicker().data('datepicker').selectDate(new Date(2019, 8, {{day.which_day}}));
+        $('#cal1').datepicker().data('datepicker').selectDate(new Date({{now.year}}, {{now.month-1}}, {{day.which_day}}));
         {% endfor %}
         {% for night in unavnights %}
-        $('#cal2').datepicker().data('datepicker').selectDate(new Date(2019, 8, {{night.which_day}}));
+        $('#cal2').datepicker().data('datepicker').selectDate(new Date({{now.year}}, {{now.month-1}}, {{night.which_day}}));
         {% endfor %}
     </script>
 
@@ -404,48 +315,10 @@
 	var cal1 = $('#cal1').datepicker().data('datepicker');
 	var cal2 = $('#cal2').datepicker().data('datepicker');
 	
-	cal1.date = new Date(2019,8,1);
-	cal2.date = new Date(2019,8,1);
+	cal1.date = new Date({{now.year}}, {{now.month-1}},1);
+	cal2.date = new Date({{now.year}}, {{now.month-1}},1);
     </script>
-    
-    <script>
-$(document).on("click", ".acceptswap", function () {
-        var swapid1 = $(this).data("swap1")
-        var swapid2 = $(this).data("swap2")
 
-    $.post({
-                data: {
-                    id1: swapid1,
-                    id2: swapid2,
-                    accept: true
-                },
-                type: 'POST',
-                url: '/swapshift',
-                success: function() {
-                    location.reload();
-                }
-            });
-        });
-
-$(document).on("click", ".rejectswap", function () {
-// vary id with swap number cause only first works
-var swapid1 = $(this).data("swap1")
-var swapid2 = $(this).data("swap2")
-
-$.post({
-        data: {
-            id1: swapid1,
-            id2: swapid2,
-            accept: false
-        },
-        type: 'POST',
-        url: '/swapshift',
-        success: function() {
-            location.reload();
-        }
-    });
-});
-    </script>
 </body>
 
 </html>
